@@ -21,12 +21,19 @@
 import json                        # json
 import threading                   # multi threading
 import os                          # for listing directories
-import Queue                       # queue used for thread syncronization
+#import Queue                       # queue used for thread syncronization
 import sys                         # system calls
 import argparse                    # for parsing arguments
 import base64                      # necessary to encode in base64
 #                                  # according to the RFC2045 standard
 import requests                    # python HTTP requests library
+
+import sys
+is_py2 = sys.version[0] == '2'
+if is_py2:
+    import Queue as queue
+else:
+    import queue as queue
 
 # WebSockets
 from autobahn.twisted.websocket import WebSocketClientProtocol, \
@@ -69,7 +76,7 @@ class WSInterfaceFactory(WebSocketClientFactory):
         self.dirOutput = dirOutput
         self.contentType = contentType
         self.model = model
-        self.queueProto = Queue.Queue()
+        self.queueProto = queue.Queue()
 
         self.openHandshakeTimeout = 10
         self.closeHandshakeTimeout = 10
@@ -86,7 +93,7 @@ class WSInterfaceFactory(WebSocketClientFactory):
             utt = self.queue.get_nowait()
             self.queueProto.put(utt)
             return True
-        except Queue.Empty:
+        except queue.Empty:
             print("getUtterance: no more utterances to process, queue is "
                   "empty!")
             return False
@@ -107,7 +114,7 @@ class WSInterfaceFactory(WebSocketClientFactory):
                                         self.dirOutput, self.contentType)
             proto.setUtterance(utt)
             return proto
-        except Queue.Empty:
+        except queue.Empty:
             print("queue should not be empty, otherwise this function should "
                   "not have been called")
             return None
@@ -326,7 +333,7 @@ if __name__ == '__main__':
     log.startLogging(sys.stdout)
 
     # add audio files to the processing queue
-    q = Queue.Queue()
+    q = queue.Queue()
     lines = [line.rstrip('\n') for line in open(args.fileInput)]
     fileNumber = 0
     for fileName in lines:
